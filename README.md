@@ -1,5 +1,13 @@
 # genai-interactive-topics
 
+## Requirements
+
+To set up the environment and install all dependencies, run:
+
+```bash
+pip install -r requirements.txt
+```
+
 ## How to run
 
 replace `path_to_your_data_directory` and `your_openai_key` with the actual paths and keys you are using.
