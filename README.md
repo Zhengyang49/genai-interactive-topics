@@ -1,44 +1,73 @@
 # Topic Modeling Pipeline
 
 ## Overview
-
-This repository contains a pipeline for topic modeling using BERTopic. The workflow involves:
+This repository contains a streamlined pipeline for topic modeling using BERTopic. The workflow involves:
 
 1. **First-time setup**: Convert markdown data to JSON, preprocess the data, run topic modeling, generate topic descriptions, and visualize topics interactively.
 2. **Using an existing model**: Load the saved model and descriptions to generate interactive visualizations.
 
+---
+
 ## Installation & Setup
 
-### 1. Clone the repository
+### **1. Clone the repository**
+
 ```bash
 git clone <repository_url>
 cd <repository_name>
 ```
-### 2. Requirements
-To set up the environment and install all dependencies, run:
+
+### **2. Install dependencies**
+
+Ensure you have Python 3.8+ and install the required packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
+---
+
 ## Running the Pipeline
 
-replace `path_to_your_data_directory` and `your_openai_key` with the actual paths and keys you are using.
+### **Single Command Execution**
+To run the full pipeline, execute the following command:
 
-To run both topic modeling and the app:
 ```bash
-python main.py --mode both --data_dir "path_to_your_data_directory" --openai_key "your_openai_key"
+python run_pipeline.py --input_dir data/ --output_dir model_output/ --config_file config_bertopic.yaml --openai_api_key <your_api_key>
 ```
 
-To run only the topic modeling:
+This command performs the following steps in sequence:
+- Converts markdown files in `data/` to JSON.
+- Preprocesses text for topic modeling.
+- Trains a BERTopic model.
+- Generates topic descriptions using GPT (if OpenAI API key is provided).
+- Saves the model, topic labels, and descriptions.
+- Runs an interactive visualization using Dash and Plotly.
+
+---
+
+### **Using an Existing Model**
+
+If you already have a trained model and topic descriptions, simply run the interactive visualization:
+
 ```bash
-python main.py --mode modeling --data_dir "path_to_your_data_directory" --openai_key "your_openai_key"
+python visualization.py --model_dir model_output/
 ```
 
-To run only the app:
-```bash
-python main.py --mode app --data_dir "path_to_your_data_directory"
-```
+This will load the saved topic model and descriptions, allowing you to explore the results visually.
+
+---
+
+## Configuration
+
+Modify the `config_bertopic.yaml` file to adjust the topic modeling settings, including embedding models, vectorizer settings, and topic clustering parameters.
+
+---
+
+## Contribution
+
+Feel free to open an issue or pull request to improve this pipeline!
+
 
 ## How to deploy
 We include two types of publishing the app to a real website: one is through using google cloud platform, one is through our own server.
