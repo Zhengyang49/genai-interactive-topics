@@ -1,14 +1,27 @@
-# genai-interactive-topics
+# Topic Modeling Pipeline
 
-## Requirements
+## Overview
 
+This repository contains a pipeline for topic modeling using BERTopic. The workflow involves:
+
+1. **First-time setup**: Convert markdown data to JSON, preprocess the data, run topic modeling, generate topic descriptions, and visualize topics interactively.
+2. **Using an existing model**: Load the saved model and descriptions to generate interactive visualizations.
+
+## Installation & Setup
+
+### 1. Clone the repository
+```bash
+git clone <repository_url>
+cd <repository_name>
+```
+### 2. Requirements
 To set up the environment and install all dependencies, run:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## How to run
+## Running the Pipeline
 
 replace `path_to_your_data_directory` and `your_openai_key` with the actual paths and keys you are using.
 
