@@ -69,6 +69,67 @@ def load_cluster_descriptions(model_dir):
         cluster_descriptions = json.load(f)
     return cluster_descriptions
 
+# Function to save cluster_descriptions into a JSON file
+def save_cluster_descriptions_to_json(model_dir, cluster_descriptions, output_filename="cluster_descriptions.json"):
+    # Convert keys to standard int type
+    cluster_descriptions = {int(key): value for key, value in cluster_descriptions.items()}
+    # Save to JSON
+    with open(os.path.join(model_dir, output_filename), "w", encoding="utf-8") as file:
+        json.dump(cluster_descriptions, file, ensure_ascii=False, indent=4)
+    print(f"Cluster descriptions saved to {output_filename}")
+
+# Function to cluster topics based on intertopic distances
+def cluster_topics(topic_model, coords, random_state=42):
+    # Set random seed for reproducibility
+    np.random.seed(random_state)
+    x_vals = coords['x']
+    y_vals = coords['y']
+
+    # Standardize the coordinates
+    coordinates = np.vstack((x_vals, y_vals)).T
+    scaler = StandardScaler()
+    scaled_coords = scaler.fit_transform(coordinates)
+
+    # Perform hierarchical clustering
+    linkage_matrix = linkage(scaled_coords, method='ward')
+    clusters = fcluster(linkage_matrix, t=1, criterion='distance')
+    return clusters
+
+# Function to order clusters by importance
+def order_clusters_by_importance(topic_model, clusters, coords, random_state=42):
+    # Set random seed for reproducibility
+    np.random.seed(random_state)
+    x_vals = coords['x']
+    y_vals = coords['y']
+    coordinates = np.vstack((x_vals, y_vals)).T
+
+    # Standardize the coordinates
+    scaler = StandardScaler()
+    scaled_coords = scaler.fit_transform(coordinates)
+
+    # Apply PCA to extract variance contributions
+    pca = PCA(n_components=2, random_state=random_state)  # Use 2 components to match x, y dimensions
+    pca_coords = pca.fit_transform(scaled_coords)
+    explained_variance = pca.explained_variance_ratio_
+    
+    # Assign PCA contributions to clusters
+    cluster_variance = {}
+    for cluster_id in np.unique(clusters):
+        cluster_points = pca_coords[np.array(clusters) == cluster_id]
+        # Sum variance contributions of all points in the cluster
+        cluster_variance[cluster_id] = np.sum(np.var(cluster_points, axis=0) * explained_variance)
+    # Order clusters by variance contribution
+    ordered_clusters = sorted(cluster_variance.items(), key=lambda x: x[1], reverse=True)
+    return ordered_clusters
+
+# Function to display top keywords for the selected topic
+def display_keywords(topic_label, topic_keywords_with_labels):
+    if topic_label in topic_keywords_with_labels:
+        keywords = topic_keywords_with_labels[topic_label]
+        return [html.H4(f"Top Keywords for {topic_label}", className="card-title"),
+                html.P(f"{', '.join(keywords)}", className="card-text", style={"font-size": "16px"})]
+    return html.P("No keywords available.", style={"font-size": "16px", "color": "black"})
+
 def main(directory, rerun=False, key=None):
     # Load the BERTopic model and files   
     model_dir = directory
@@ -105,7 +166,7 @@ def main(directory, rerun=False, key=None):
     
     def create_intertopic_distance_plot(coords, highlighted_label=None):
         x_vals = coords['x']
-        y_vals = coords['y']
+        y_vals = coords['y']+0.01
     
         # Add jitter to reduce overlap
         def add_jitter(values, jitter_strength=0.5):
@@ -132,7 +193,8 @@ def main(directory, rerun=False, key=None):
         scatter_trace = go.Scatter(
             x=x_vals,
             y=y_vals,
-            mode='markers+text',
+            #mode='markers+text',
+            mode='markers',
             text=topic_labels,
             hovertext=hover_texts,
             hoverinfo='text',
@@ -141,17 +203,49 @@ def main(directory, rerun=False, key=None):
             textfont=dict(size=12, color='black'))
     
         fig = go.Figure(data=[scatter_trace])
+        #fig.update_layout(
+        #    title="Intertopic Distance Map",
+        #    height=700,
+        #    xaxis_title="PC1",
+        #    yaxis_title="PC2",
+        #    plot_bgcolor='white',
+        #    paper_bgcolor='white',
+        #    hovermode="closest",
+        #    font=dict(family="Arial", size=12, color="black"),
+        #    xaxis=dict(showgrid=True, gridcolor='lightgrey'),
+        #    yaxis=dict(showgrid=True, gridcolor='lightgrey'))
+        # Update layout to remove background and grid lines
+        # Update layout for a clean, square plot with axis lines
+        # Update layout for a square plot with axis lines but no grid or ticks
+        # Update layout to keep X and Y axis lines but remove grid and ticks
         fig.update_layout(
             title="Intertopic Distance Map",
-            height=700,
-            xaxis_title="PC1",
-            yaxis_title="PC2",
-            plot_bgcolor='white',
-            paper_bgcolor='white',
-            hovermode="closest",
-            font=dict(family="Arial", size=12, color="black"),
-            xaxis=dict(showgrid=True, gridcolor='lightgrey'),
-            yaxis=dict(showgrid=True, gridcolor='lightgrey'))
+            xaxis=dict(
+                showgrid=False,  # Remove grid lines
+                zeroline=True,  # Ensure x-axis line is drawn
+                showline=True,  # Explicitly draw x-axis line
+                mirror=True,  # Mirror the axis for a clean look
+                tickmode='array',  # Avoid auto ticks
+                tickvals=[],  # Remove tick labels
+                linecolor='black',  # Ensure axis lines are visible
+                linewidth=1  # Set axis line thickness
+            ),
+            yaxis=dict(
+                showgrid=False,  # Remove grid lines
+                zeroline=True,  # Ensure y-axis line is drawn
+                showline=True,  # Explicitly draw y-axis line
+                mirror=True,  # Mirror axis for symmetry
+                tickmode='array',  # Avoid auto ticks
+                tickvals=[],  # Remove tick labels
+                linecolor='black',  # Ensure axis lines are visible
+                linewidth=1  # Set axis line thickness
+            ),
+            plot_bgcolor="white",  # White background
+            paper_bgcolor="white",  # White canvas
+            autosize=True,
+            #width=700,  # Ensure square proportions
+            #height=700,  # Ensure square proportions
+        )
         return fig
 
     # Function to create a bar chart of top keywords and their weights for a specific topic
@@ -168,7 +262,7 @@ def main(directory, rerun=False, key=None):
                     title=f"Top {n_words} Keywords for Topic {topic_label}",
                     xaxis_title="Weight",
                     yaxis_title="Keywords",
-                    height=500,
+                    #height=500,
                     template="plotly_white")
                 return fig
         return go.Figure()
