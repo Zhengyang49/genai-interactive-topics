@@ -282,15 +282,28 @@ def run_pipeline(input_path, config_path, output_dir):
 
 
 # -------------------- 7️⃣ Execute --------------------
+import argparse
+
+def main():
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description="Run BERTopic pipeline for topic modeling.")
+    parser.add_argument("--type", type=str, required=True, help="Type of documents (e.g., education, finance).")
+    parser.add_argument("--config", type=str, required=True, help="Path to the config YAML file.")
+    parser.add_argument("--input", type=str, required=True, help="Path to the input JSON file.")
+    parser.add_argument("--output", type=str, required=True, help="Path to the output directory.")
+
+    # Parse arguments
+    args = parser.parse_args()
+
+    # Set OpenAI API key if needed
+    openai.api_key = "xxxx"  # Consider using environment variables for security
+
+    # Run pipeline with provided arguments
+    run_pipeline(args.input, args.config, args.output)
+
 if __name__ == "__main__":
-    openai.api_key = "xxxx"
+    main()
 
-    type = 'education'
-    config_yaml = f"/genai-chatbot/config/config_bertopic_{type}.yaml"
-    input_json = f"/genai-chatbot/data/processed_doc/documents-{type}.json"
-    output_directory = f"/test_chatbot/model_info_{type}"
-
-    run_pipeline(input_json, config_yaml, output_directory)
 
 
 
