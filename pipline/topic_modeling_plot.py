@@ -379,8 +379,24 @@ def main(directory, rerun=False, key=None):
     # Run the app
     app.run_server(debug=True, port=8092)
 
-# Call the main function to run the app
+import argparse
+
+def main(model_path, rerun=True, key=None):
+    print(f"Running chatbot with model path: {model_path}")
+    print(f"OpenAI Key: {'Provided' if key else 'Not Provided'}")
+    print(f"Rerun Mode: {rerun}")
+    # Your main chatbot function logic here
+
 if __name__ == '__main__':
-    openai_key = "xxxx"
-    #openai_key = None
-    main('/test_chatbot/model_info_education', rerun=True, key = openai_key)
+    parser = argparse.ArgumentParser(description="Run the chatbot application.")
+
+    # Add arguments for model path, rerun flag, and OpenAI key
+    parser.add_argument('--model_path', type=str, required=True, help="Path to the model directory")
+    parser.add_argument('--rerun', type=bool, default=True, help="Whether to rerun the chatbot")
+    parser.add_argument('--key', type=str, default=None, help="OpenAI API Key")
+
+    args = parser.parse_args()
+
+    # Run the chatbot with provided arguments
+    main(args.model_path, rerun=args.rerun, key=args.key)
+
